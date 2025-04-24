@@ -1,7 +1,6 @@
 from typing import Dict, Any, Optional, Union
 import json
 import numpy as np
-from myreze.data.geometry import Geometry
 from myreze.viz.visualization import Visualization
 from myreze.data.validate import validate_mdp
 from typing import Union, List
@@ -15,6 +14,11 @@ class Geometry:
     def __init__(self, type: str, value: Union[dict, List[dict]]):
         self.type = type
         self.value = value
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "Geometry":
+        """Create a Geometry instance from a dictionary."""
+        return cls(type=data["type"], value=data["value"])
 
 
 class Time:
@@ -91,7 +95,7 @@ class MyrezeDataPackage:
         data: Dict[str, Any],
         time: Time,
         unreal_visualization: Optional[Visualization] = None,
-        threejs_visualization: Optional[Visualization] = None
+        threejs_visualization: Optional[Visualization] = None,
         metadata: Optional[Dict[str, Any]] = None,
         version: str = "1.0.0",
     ):
@@ -134,12 +138,12 @@ class MyrezeDataPackage:
     def visualize(self) -> Visualization:
         """Get the visualization."""
         return self.visualization(self)
-    
+
     def to_threejs(self):
-        return ..
+        return None
 
     def to_unreal(self):
-        return ..
+        return None
 
     @classmethod
     def from_json(cls, json_str: str) -> "MyrezeDataPackage":

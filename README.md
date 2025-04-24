@@ -21,6 +21,13 @@ data_package = MyrezeDataPackage()
 renderer = UnrealRenderer()
 ```
 
+## Update PyPI 
+
+```shell
+python -m build
+python -m twine upload dist/*
+```
+
 ## Documentation
 
 See the [API documentation](docs/api.md) and [tutorial](docs/tutorial.md) for more information.
