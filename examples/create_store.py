@@ -23,7 +23,6 @@ class WeatherProduct(Product):
         }
         return MyrezeDataPackage(
             id=f"pkg-{uuid.uuid4()}",
-            geometry=Geometry.from_dict(spatial_region),
             time=Time.from_dict(temporal_region),
             data=data,
             unreal_visualization=None,

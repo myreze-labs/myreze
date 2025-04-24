@@ -9,7 +9,7 @@ import isodate  # For ISO 8601 parsing
 
 
 class Geometry:
-    """Represents a geometry in GeoJSON format."""
+    """Represents a geometry."""
 
     def __init__(self, type: str, value: Union[dict, List[dict]]):
         self.type = type
@@ -91,7 +91,6 @@ class MyrezeDataPackage:
     def __init__(
         self,
         id: str,
-        geometry: Geometry,
         data: Dict[str, Any],
         time: Time,
         unreal_visualization: Optional[Visualization] = None,
@@ -100,7 +99,6 @@ class MyrezeDataPackage:
         version: str = "1.0.0",
     ):
         self.id = id
-        self.geometry = geometry  # data needed to build the visual representation
         self.data = data  # May include NumPy arrays
         self.time = time
         self.unreal_visualization = unreal_visualization
@@ -123,10 +121,16 @@ class MyrezeDataPackage:
             "version": self.version,
             "type": "MyrezeDataPackage",
             "id": self.id,
-            "geometry": self.geometry.to_dict(),
             "data": data,
-            "visualization": (
-                self.visualization.to_dict() if self.visualization else None
+            "unreal_visualization": (
+                self.unreal_visualization.to_dict()
+                if self.unreal_visualization
+                else None
+            ),
+            "threejs_visualization": (
+                self.threejs_visualization.to_dict()
+                if self.threejs_visualization
+                else None
             ),
             "metadata": self.metadata,
         }
@@ -140,9 +144,11 @@ class MyrezeDataPackage:
         return self.visualization(self)
 
     def to_threejs(self):
+        """Convert the data package to a Three.js object."""
         return None
 
     def to_unreal(self):
+        """Convert the data package to an Unreal Engine object."""
         return None
 
     @classmethod
@@ -153,7 +159,6 @@ class MyrezeDataPackage:
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "MyrezeDataPackage":
         """Create a data package from a dictionary."""
-        geometry = Geometry.from_dict(data["geometry"])
         visualization = (
             Visualization.from_dict(data["visualization"])
             if data.get("visualization")
@@ -161,7 +166,6 @@ class MyrezeDataPackage:
         )
         return cls(
             id=data["id"],
-            geometry=geometry,
             data=data["data"],  # Lists remain lists; convert to arrays later if needed
             visualization=visualization,
             metadata=data.get("metadata", {}),
