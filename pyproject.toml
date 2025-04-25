@@ -1,6 +1,6 @@
 [project]
 name = "myreze"
-version = "0.0.0"
+version = "0.0.1"
 authors = [{name = "Audun Skau Hansen", email = "audunsh4@gmail.com"}]
 description = "Placeholder for Myreze data and visualization package"
 readme = "README.md"

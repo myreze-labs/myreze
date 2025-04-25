@@ -42,6 +42,25 @@ class FlexibleProductProvider(ProductProvider):
         """Return a list of available products with their capabilities."""
         return [
             WeatherProduct(
+                product_id="15-day-clouds",
+                name="15 Day global cloud forecast",
+                description="Blablabla",
+                source="Myreze",
+                data_types=["temperature", "precipitation", "humidity"],
+                spatial_coverage={
+                    "type": "BoundingBox",
+                    "coordinates": [[-180, -90], [180, 90]],
+                },
+                temporal_coverage={
+                    "type": "Capability",
+                    "supports_historical": True,
+                    "earliest_date": "1950-01-01T00:00:00Z",
+                    "latest_date": "2023-12-31T23:59:59Z",
+                    "supports_forecast": False,
+                },
+                availability={"public": True},
+            ),
+            WeatherProduct(
                 product_id="weather-historical",
                 name="Historical Weather Data",
                 description="Past weather data from various sources.",
