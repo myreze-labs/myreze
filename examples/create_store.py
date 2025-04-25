@@ -1,7 +1,11 @@
 from myreze.store.product import Product
 from myreze.store.provider import ProductProvider
 from myreze.store.server import StoreServer
-from myreze.data import MyrezeDataPackage, Geometry, Time
+from myreze.data import MyrezeDataPackage, Time
+from myreze.viz.threejs.flat_overlay import (
+    FlatOverlayRenderer,
+    Planar4channelTextureRenderer,
+)
 import numpy as np
 from typing import Dict, Any, Optional, List
 import uuid
@@ -18,15 +22,14 @@ class WeatherProduct(Product):
     ) -> MyrezeDataPackage:
         # Mock data fetching (replace with real source, e.g., ECMWF)
         data = {
-            "temperature": np.random.rand(10, 10),
-            "precipitation": np.random.rand(10, 10),
+            "texture": np.random.randint(0, 255, (4, 100, 100), dtype=np.uint8),
         }
         return MyrezeDataPackage(
             id=f"pkg-{uuid.uuid4()}",
             time=Time.from_dict(temporal_region),
             data=data,
             unreal_visualization=None,
-            threejs_visualization=None,
+            threejs_visualization=Planar4channelTextureRenderer(),
         )
 
 

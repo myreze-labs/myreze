@@ -1,7 +1,8 @@
 from typing import Dict, Any, Optional, Union
 import json
 import numpy as np
-from myreze.viz.visualization import Visualization
+from myreze.viz.threejs.threejs import ThreeJSRenderer
+from myreze.viz.unreal.unreal import UnrealRenderer
 from myreze.data.validate import validate_mdp
 from typing import Union, List
 from datetime import datetime
@@ -93,8 +94,8 @@ class MyrezeDataPackage:
         id: str,
         data: Dict[str, Any],
         time: Time,
-        unreal_visualization: Optional[Visualization] = None,
-        threejs_visualization: Optional[Visualization] = None,
+        unreal_visualization: Optional[UnrealRenderer] = None,
+        threejs_visualization: Optional[ThreeJSRenderer] = None,
         metadata: Optional[Dict[str, Any]] = None,
         version: str = "1.0.0",
     ):
@@ -122,6 +123,7 @@ class MyrezeDataPackage:
             "type": "MyrezeDataPackage",
             "id": self.id,
             "data": data,
+            "time": self.time.to_dict(),
             "unreal_visualization": (
                 self.unreal_visualization.to_dict()
                 if self.unreal_visualization
@@ -139,17 +141,13 @@ class MyrezeDataPackage:
         """Convert the data package to a JSON string."""
         return json.dumps(self.to_dict())
 
-    def visualize(self) -> Visualization:
-        """Get the visualization."""
-        return self.visualization(self)
-
-    def to_threejs(self):
+    def to_threejs(self, params: Dict[str, Any]):
         """Convert the data package to a Three.js object."""
-        return None
+        return self.threejs_visualization.render(self.data, params)
 
-    def to_unreal(self):
+    def to_unreal(self, params: Dict[str, Any]):
         """Convert the data package to an Unreal Engine object."""
-        return None
+        return self.unreal_visualization.render(self.data, params)
 
     @classmethod
     def from_json(cls, json_str: str) -> "MyrezeDataPackage":
@@ -159,15 +157,24 @@ class MyrezeDataPackage:
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "MyrezeDataPackage":
         """Create a data package from a dictionary."""
-        visualization = (
-            Visualization.from_dict(data["visualization"])
-            if data.get("visualization")
+
+        threejs_visualization = (
+            ThreeJSRenderer.from_dict(data["threejs_visualization"])
+            if data["threejs_visualization"]
             else None
         )
+        unreal_visualization = (
+            UnrealRenderer.from_dict(data["unreal_visualization"])
+            if data["unreal_visualization"]
+            else None
+        )
+
         return cls(
             id=data["id"],
             data=data["data"],  # Lists remain lists; convert to arrays later if needed
-            visualization=visualization,
+            time=Time.from_dict(data["time"]),
+            threejs_visualization=threejs_visualization,
+            unreal_visualization=unreal_visualization,
             metadata=data.get("metadata", {}),
             version=data["version"],
         )
