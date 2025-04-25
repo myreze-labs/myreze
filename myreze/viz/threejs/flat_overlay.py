@@ -1,4 +1,5 @@
 from myreze.viz.threejs.threejs import ThreeJSRenderer
+from myreze.viz.threejs.trimesh_utilities import attach_texture_to_mesh
 from typing import Dict, Any
 import numpy as np
 import trimesh
@@ -12,21 +13,13 @@ class FlatOverlayRenderer(ThreeJSRenderer):
         """Render the data package as a Three.js object."""
 
         texture = np.array(data)
-        assert texture.shape == (
-            4,
-            256,
-            256,
-        ), f"Texture must be 4x256x256: {texture.shape}"
-        assert texture.dtype == np.uint8, "Texture must be uint8"
 
         # Create a 2d horizontal GLB plane with alpha channel texture
         plane = trimesh.Trimesh(
             vertices=np.array([[0, 0, 0], [1, 0, 0], [0, 0, 1], [1, 0, 1]]),
             faces=np.array([[2, 1, 0], [3, 1, 2]]),
         )
-        plane.visual = trimesh.visual.TextureVisuals(
-            image=texture,
-        )
+        plane = attach_texture_to_mesh(plane, texture)
 
         return plane.export(file_type="glb")
 
@@ -45,8 +38,6 @@ class Planar4channelTextureRenderer(ThreeJSRenderer):
             vertices=np.array([[0, 0, 0], [1, 0, 0], [0, 0, 1], [1, 0, 1]]),
             faces=np.array([[2, 1, 0], [3, 1, 2]]),
         )
-        plane.visual = trimesh.visual.TextureVisuals(
-            image=texture,
-        )
+        plane = attach_texture_to_mesh(plane, texture)
 
         return plane.export(file_type="glb")

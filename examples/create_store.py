@@ -22,7 +22,7 @@ class WeatherProduct(Product):
     ) -> MyrezeDataPackage:
         # Mock data fetching (replace with real source, e.g., ECMWF)
         data = {
-            "texture": np.random.randint(0, 255, (4, 100, 100), dtype=np.uint8),
+            "texture": np.random.randint(0, 255, (100, 100, 4), dtype=np.uint8),
         }
         return MyrezeDataPackage(
             id=f"pkg-{uuid.uuid4()}",
