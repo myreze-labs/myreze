@@ -8,4 +8,4 @@ class CloudRenderer(UnrealRenderer):
 
     def render(self, data: "MyrezeDataPackage", params: Dict[str, Any]) -> str:
         """Render the data package as a Unreal Engine object."""
-        pass
+        return "aaa"
