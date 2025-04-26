@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 
 class UnrealRenderer(ABC):
     """
-    Unreal Engine-specific rendering utilities.
+    Unreal Engine-specific rendering utilities..
     """
 
     # Registry to keep track of all renderer subclasses
