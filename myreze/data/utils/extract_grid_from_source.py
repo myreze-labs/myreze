@@ -6,11 +6,6 @@ from rasterio.transform import from_origin
 local_zarr_path = "C:/Users/Havard/prediction_20250403_164054_gdas_20250402_12_gencast_Enhanced.zarr"
 ds = xr.open_zarr(local_zarr_path, chunks=False, decode_timedelta=True).compute()
 
-
-import xarray as xr
-from rasterio.transform import from_origin
-import numpy as np
-
 def zarr_to_array(order, output_bbox=None, output_crs=None):
     ds = order.ds
     variable_name = order.weather_layer
