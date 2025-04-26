@@ -1,7 +1,8 @@
 from typing import Dict, Type
+from abc import ABC, abstractmethod
 
 
-class UnrealRenderer:
+class UnrealRenderer(ABC):
     """
     Unreal Engine-specific rendering utilities.
     """
@@ -12,6 +13,7 @@ class UnrealRenderer:
     def __init__(self):
         pass
 
+    @abstractmethod
     def render(self, data: "MyrezeDataPackage") -> str:
         """Render the data package as a Unreal Engine object."""
         pass
