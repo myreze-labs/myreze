@@ -117,6 +117,15 @@ python -m twine upload dist/*
 - numpy: For numerical operations
 - isodate: For ISO 8601 parsing
 
+## Data conventions
+
+For convenience, let's stick to some simple rules:
+
+- Use Web Mercator WGS84 auxiliary sphere (EPSG 3857) when passing geolocations (like bounding boxes). See 
+-  Return geolocated data normalized to the (0,1) planar region.
+-  Let the second component (y) in the returned geometries point up.
+-  Place any layers at y=0 offset.
+
 ## Documentation
 
 See the [API documentation](docs/api.md) and [tutorial](docs/tutorial.md) for more information.
