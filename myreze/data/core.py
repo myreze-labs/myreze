@@ -102,7 +102,23 @@ class MyrezeDataPackage:
         self.id = id
         self.data = data  # May include NumPy arrays
         self.time = time
+        # Ensure unreal_visualization is an instance, not the class itself
+        if unreal_visualization is not None and not isinstance(
+            unreal_visualization, UnrealRenderer
+        ):
+            raise TypeError(
+                "unreal_visualization must be an instance of UnrealRenderer, "
+                "not the class itself"
+            )
         self.unreal_visualization = unreal_visualization
+        # Ensure threejs_visualization is an instance, not the class itself
+        if threejs_visualization is not None and not isinstance(
+            threejs_visualization, ThreeJSRenderer
+        ):
+            raise TypeError(
+                "threejs_visualization must be an instance of ThreeJSRenderer, "
+                "not the class itself"
+            )
         self.threejs_visualization = threejs_visualization
         self.metadata = metadata or {}
         self.version = version
