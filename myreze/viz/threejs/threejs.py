@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Dict, Type
+from typing import Dict, Type, Any, Optional
 
 # Remove direct import that causes circular dependency
 # We'll use string type annotation instead
@@ -17,7 +17,9 @@ class ThreeJSRenderer(ABC):
         pass
 
     @abstractmethod
-    def render(self, data: "MyrezeDataPackage"):
+    def render(
+        self, data: "MyrezeDataPackage", params: Optional[Dict[str, Any]] = None
+    ):
         """Render the data package as a Three.js object."""
         pass
 

@@ -15,6 +15,7 @@ Myreze is built around these core concepts:
 - **Data Packages**: Container for geospatial data with time information
 - **Time**: Flexible time representation (timestamps, spans, series)
 - **Renderers**: Visualization schemas for different platforms
+- **Visualization Types**: Metadata indicating how data should be interpreted and rendered
 
 ## Usage
 
@@ -31,11 +32,53 @@ data_package = MyrezeDataPackage(
     id="my-geodata",
     data={"points": [[lat1, lon1], [lat2, lon2]]},
     time=time_data,
-    metadata={"creator": "Your Name", "description": "Sample dataset"}
+    metadata={"creator": "Your Name", "description": "Sample dataset"},
+    visualization_type="point_cloud"  # Indicates how to visualize the data
 )
 
 # Export to JSON
 json_data = data_package.to_json()
+```
+
+### Visualization Types
+
+The `visualization_type` field helps receivers understand how to interpret and visualize your data. This is crucial when your data package is processed by different visualization engines.
+
+#### Common Visualization Types
+
+- `"flat_overlay"` - 2D overlays like weather maps, satellite imagery
+- `"point_cloud"` - Scattered data points (weather stations, sensors)
+- `"heatmap"` - Continuous data surfaces (temperature, pressure)
+- `"vector_field"` - Directional data (wind, ocean currents)
+- `"terrain"` - 3D elevation data
+- `"trajectory"` - Path or route data over time
+- `"contour"` - Isoline representations (pressure contours, elevation contours)
+
+#### Example: Weather Overlay
+
+```python
+from myreze.data import MyrezeDataPackage, Time
+import numpy as np
+
+# Temperature data as a 2D grid
+temperature_data = {
+    "grid": np.random.rand(100, 100),  # Temperature values
+    "bounds": [-10, 50, 10, 60],       # Geographic bounds [west, south, east, north]
+    "units": "celsius"
+}
+
+data_package = MyrezeDataPackage(
+    id="temperature-overlay",
+    data=temperature_data,
+    time=Time.timestamp("2023-01-01T12:00:00Z"),
+    visualization_type="flat_overlay",
+    metadata={
+        "description": "Temperature overlay for weather visualization",
+        "colormap": "viridis",
+        "min_value": -20,
+        "max_value": 40
+    }
+)
 ```
 
 ### Visualizing with Three.js
@@ -44,12 +87,13 @@ json_data = data_package.to_json()
 from myreze.data import MyrezeDataPackage
 from myreze.viz import ThreeJSRenderer
 
-# Create a data package
+# Create a data package with visualization type
 data_package = MyrezeDataPackage(
     id="visualization-example",
     data=your_data,
     time=your_time,
-    threejs_visualization=ThreeJSRenderer()
+    threejs_visualization=ThreeJSRenderer(),
+    visualization_type="heatmap"  # Tells the receiver how to interpret the data
 )
 
 # Generate visualization
@@ -62,12 +106,13 @@ visualization = data_package.to_threejs(params={})
 from myreze.data import MyrezeDataPackage
 from myreze.viz import UnrealRenderer
 
-# Create a data package
+# Create a data package with visualization type
 data_package = MyrezeDataPackage(
     id="unreal-example",
     data=your_data,
     time=your_time,
-    unreal_visualization=UnrealRenderer()
+    unreal_visualization=UnrealRenderer(),
+    visualization_type="terrain"  # Indicates 3D terrain rendering
 )
 
 # Generate visualization

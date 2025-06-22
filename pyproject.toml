@@ -1,6 +1,6 @@
 [project]
 name = "myreze"
-version = "0.0.3"
+version = "0.0.5"
 authors = [{name = "Audun Skau Hansen", email = "audunsh4@gmail.com"}]
 description = "Placeholder for Myreze data and visualization package"
 readme = "README.md"
@@ -8,6 +8,7 @@ requires-python = ">=3.6"
 dependencies = [
     "trimesh",
     "isodate",
+    "rasterio"
 ]
 classifiers = [
     "Programming Language :: Python :: 3",

@@ -17,6 +17,7 @@ class Product(ABC):
         temporal_coverage: Dict[str, Any],
         availability: Dict[str, Any],
         visualization_targets: List[str] = None,
+        visualization_type: str = "",
     ):
         self.product_id = product_id
         self.name = name
@@ -33,6 +34,7 @@ class Product(ABC):
             "ThreeJS",
             "PNG",
         ]
+        self.visualization_type = visualization_type
 
     @abstractmethod
     async def generate_package(
@@ -56,4 +58,5 @@ class Product(ABC):
             "temporal_coverage": self.temporal_coverage,
             "availability": self.availability,
             "visualization_targets": self.visualization_targets,
+            "visualization_type": self.visualization_type,
         }

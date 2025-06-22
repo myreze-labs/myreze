@@ -1,4 +1,4 @@
-from typing import Dict, Type
+from typing import Dict, Type, Optional, Any
 from abc import ABC, abstractmethod
 
 
@@ -14,7 +14,9 @@ class UnrealRenderer(ABC):
         pass
 
     @abstractmethod
-    def render(self, data: "MyrezeDataPackage") -> str:
+    def render(
+        self, data: "MyrezeDataPackage", params: Optional[Dict[str, Any]] = None
+    ) -> str:
         """Render the data package as a Unreal Engine object."""
         pass
 
