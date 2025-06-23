@@ -11,6 +11,9 @@ from datetime import datetime
 import io
 import warnings
 
+# Forward declaration to avoid circular imports
+MultiAgentContext = None
+
 # Constants for LLM agent discovery
 VISUALIZATION_TYPES = [
     "flat_overlay",
@@ -502,6 +505,7 @@ class MyrezeDataPackage:
     - **Multi-Resolution Data**: Different detail levels for various uses
     - **MCP/RAG Integration**: Structured metadata for search and retrieval
     - **Platform-Agnostic Export**: Multiple serialization formats
+    - **Multi-Agent Context**: Cumulative context from multiple agents
 
     Args:
         id: Unique identifier for the data package
@@ -516,10 +520,12 @@ class MyrezeDataPackage:
         visual_summary: Visual representations for multimodal LLMs
         semantic_context: Semantic metadata for MCP/RAG integration
         multi_resolution_data: Multi-resolution data support
+        agent_context: Multi-agent context with attribution and audit trails
 
     Example:
         >>> import numpy as np
         >>> from myreze.data import MyrezeDataPackage, Time, SemanticContext
+        >>> from myreze.data.agent_context import add_expert_opinion
         >>>
         >>> # Create enhanced data package
         >>> data = {
@@ -541,6 +547,14 @@ class MyrezeDataPackage:
         ...     visualization_type="heatmap",
         ...     semantic_context=semantic_context
         ... )
+        >>>
+        >>> # Add expert context as package moves through agents
+        >>> add_expert_opinion(
+        ...     package,
+        ...     "This shows a strong urban heat island effect typical for summer afternoons",
+        ...     expert_id="weather_forecasting_agent",
+        ...     confidence=0.9
+        ... )
     """
 
     def __init__(
@@ -558,6 +572,7 @@ class MyrezeDataPackage:
         visual_summary: Optional[VisualSummary] = None,
         semantic_context: Optional[SemanticContext] = None,
         multi_resolution_data: Optional[MultiResolutionData] = None,
+        agent_context: Optional["MultiAgentContext"] = None,
     ):
         """
         Initialize an enhanced MyrezeDataPackage.
@@ -575,6 +590,7 @@ class MyrezeDataPackage:
             visual_summary: Visual representations for multimodal LLMs
             semantic_context: Semantic metadata for MCP/RAG integration
             multi_resolution_data: Multi-resolution data support
+            agent_context: Multi-agent context with attribution
         """
         # Core fields (backwards compatible)
         self.id = id
@@ -606,6 +622,7 @@ class MyrezeDataPackage:
         self.visual_summary = visual_summary
         self.semantic_context = semantic_context
         self.multi_resolution_data = multi_resolution_data
+        self.agent_context = agent_context
 
         # Auto-generate missing components if possible
         if not self.semantic_context and self.visualization_type:
@@ -947,6 +964,9 @@ class MyrezeDataPackage:
                         if self.multi_resolution_data
                         else None
                     ),
+                    "agent_context": (
+                        self.agent_context.to_dict() if self.agent_context else None
+                    ),
                 }
             )
 
@@ -1005,6 +1025,13 @@ class MyrezeDataPackage:
                 "visual_stats": self.visual_summary.visual_stats,
             }
 
+        # Add agent context summary
+        if self.agent_context:
+            summary["agent_context"] = self.agent_context.get_context_summary()
+            summary["context_narrative"] = (
+                self.agent_context.generate_narrative_summary()
+            )
+
         # Add metadata
         summary["metadata"] = self.metadata
 
@@ -1049,6 +1076,14 @@ class MyrezeDataPackage:
                 data["multi_resolution_data"]
             )
 
+        # Handle agent context (new)
+        agent_context = None
+        if data.get("agent_context"):
+            # Import here to avoid circular imports
+            from myreze.data.agent_context import MultiAgentContext
+
+            agent_context = MultiAgentContext.from_dict(data["agent_context"])
+
         return cls(
             id=data["id"],
             data=data["data"],
@@ -1061,5 +1096,116 @@ class MyrezeDataPackage:
             visual_summary=visual_summary,
             semantic_context=semantic_context,
             multi_resolution_data=multi_resolution_data,
+            agent_context=agent_context,
             validate_on_init=True,
         )
+
+    def add_agent_context(
+        self,
+        content: str,
+        agent_id: str,
+        context_type: str = "analysis",
+        agent_type: str = "llm_agent",
+        annotation_type: str = "analysis",
+        confidence: Optional[float] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> "AgentAnnotation":
+        """
+        Add context from an agent to this package.
+
+        Args:
+            content: The context content (e.g., expert opinion, analysis result)
+            agent_id: Unique identifier for the agent adding context
+            context_type: Type of context ("expert_opinion", "analysis", "validation", etc.)
+            agent_type: Type of agent ("llm_agent", "expert_system", "human_expert")
+            annotation_type: Specific type of annotation
+            confidence: Confidence score (0.0-1.0)
+            metadata: Additional metadata about the context
+
+        Returns:
+            The created AgentAnnotation
+
+        Example:
+            >>> # Weather expert adds opinion
+            >>> package.add_agent_context(
+            ...     "This wind pattern indicates record-breaking intensity for this region",
+            ...     agent_id="weather_expert_v2",
+            ...     context_type="expert_opinion",
+            ...     confidence=0.95
+            ... )
+            >>>
+            >>> # Analysis agent adds statistical insight
+            >>> package.add_agent_context(
+            ...     "Temperature variance is 2.3 standard deviations above normal",
+            ...     agent_id="statistical_analysis_agent",
+            ...     context_type="analysis",
+            ...     annotation_type="statistical"
+            ... )
+        """
+        # Import here to avoid circular imports
+        global MultiAgentContext
+        if MultiAgentContext is None:
+            from myreze.data.agent_context import MultiAgentContext
+
+        # Initialize agent context if not present
+        if self.agent_context is None:
+            self.agent_context = MultiAgentContext(package_id=self.id)
+
+        return self.agent_context.add_context(
+            content=content,
+            agent_id=agent_id,
+            context_type=context_type,
+            agent_type=agent_type,
+            annotation_type=annotation_type,
+            confidence=confidence,
+            metadata=metadata,
+        )
+
+    def get_agent_context_summary(self) -> Dict[str, Any]:
+        """
+        Get summary of all agent context added to this package.
+
+        Returns:
+            Dictionary with comprehensive summary of agent contributions
+
+        Example:
+            >>> summary = package.get_agent_context_summary()
+            >>> print(f"Total agents contributed: {summary['unique_agents']}")
+            >>> print(f"Expert opinions: {len(summary.get('expert_opinions', []))}")
+        """
+        if not self.agent_context:
+            return {"message": "No agent context available"}
+
+        return self.agent_context.get_context_summary()
+
+    def get_context_narrative(self) -> str:
+        """
+        Get natural language summary of all agent context.
+
+        Returns:
+            Human-readable narrative of expert opinions and analysis
+
+        Example:
+            >>> narrative = package.get_context_narrative()
+            >>> print(narrative)
+            # Output: "Expert opinions:
+            #         • weather_expert: This shows strong urban heat island effect
+            #         • climate_analyst: Temperature anomaly is significant
+            #         Analysis: Statistical variance above normal range"
+        """
+        if not self.agent_context:
+            return "No additional context has been added by agents."
+
+        return self.agent_context.generate_narrative_summary()
+
+    def get_expert_opinions(self) -> List["AgentAnnotation"]:
+        """
+        Get all expert opinions added to this package.
+
+        Returns:
+            List of expert opinion annotations
+        """
+        if not self.agent_context:
+            return []
+
+        return self.agent_context.get_expert_opinions()

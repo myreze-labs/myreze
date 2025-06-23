@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyrezeDataPackage Workflow - Live Weather Broadcasting</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #000000;
+            color: #ffffff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 12px;
+            line-height: 1.4;
+            overflow-x: auto;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            border-bottom: 1px solid #333333;
+            padding-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            color: #4A90E2;
+            margin-bottom: 8px;
+            font-weight: 300;
+        }
+
+        .header p {
+            color: #CCCCCC;
+            font-size: 14px;
+        }
+
+        .workflow {
+            display: flex;
+            flex-direction: row;
+            gap: 20px;
+            align-items: flex-start;
+            min-height: 600px;
+        }
+
+        .stage {
+            flex: 1;
+            background-color: #111111;
+            border: 1px solid #333333;
+            padding: 15px;
+            min-height: 500px;
+            position: relative;
+        }
+
+        .stage-header {
+            background-color: #1a1a1a;
+            color: #4A90E2;
+            padding: 8px 12px;
+            margin: -15px -15px 15px -15px;
+            font-size: 13px;
+            font-weight: 500;
+            border-bottom: 1px solid #333333;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .stage-header:hover {
+            background-color: #222222;
+        }
+
+        .stage-content {
+            transition: all 0.3s ease;
+        }
+
+        .stage.collapsed .stage-content {
+            display: none;
+        }
+
+        .component {
+            background-color: #1a1a1a;
+            border: 1px solid #444444;
+            margin-bottom: 12px;
+            padding: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .component:hover {
+            border-color: #4A90E2;
+            background-color: #222222;
+        }
+
+        .component-header {
+            color: #ffffff;
+            font-size: 11px;
+            font-weight: 500;
+            margin-bottom: 6px;
+            display: flex;
+            justify-content: between;
+            align-items: center;
+        }
+
+        .component-description {
+            color: #CCCCCC;
+            font-size: 10px;
+            line-height: 1.3;
+        }
+
+        .component-details {
+            background-color: #0a0a0a;
+            border: 1px solid #333333;
+            padding: 8px;
+            margin-top: 8px;
+            display: none;
+            font-size: 10px;
+        }
+
+        .component.expanded .component-details {
+            display: block;
+        }
+
+        .data-flow {
+            position: absolute;
+            right: -10px;
+            top: 50%;
+            width: 20px;
+            height: 1px;
+            background-color: #4A90E2;
+            z-index: 10;
+        }
+
+        .data-flow::after {
+            content: '';
+            position: absolute;
+            right: -3px;
+            top: -2px;
+            width: 0;
+            height: 0;
+            border-left: 4px solid #4A90E2;
+            border-top: 2px solid transparent;
+            border-bottom: 2px solid transparent;
+        }
+
+        .code-block {
+            background-color: #0a0a0a;
+            border: 1px solid #333333;
+            padding: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 9px;
+            color: #CCCCCC;
+            margin: 6px 0;
+            white-space: pre-wrap;
+        }
+
+        .highlight {
+            color: #4A90E2;
+            font-weight: 500;
+        }
+
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .feature-list li {
+            padding: 2px 0;
+            color: #CCCCCC;
+            font-size: 10px;
+        }
+
+        .feature-list li:before {
+            content: '→ ';
+            color: #4A90E2;
+            font-weight: bold;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            background-color: #4A90E2;
+            margin-right: 6px;
+            border: 1px solid #ffffff;
+        }
+
+        .expand-icon {
+            float: right;
+            font-size: 10px;
+            color: #CCCCCC;
+        }
+
+        .package-core {
+            background: linear-gradient(45deg, #1a1a1a, #2a2a2a);
+            border: 2px solid #4A90E2;
+            text-align: center;
+            position: relative;
+        }
+
+        .package-core .component-header {
+            color: #4A90E2;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .connection-line {
+            position: absolute;
+            background-color: #4A90E2;
+            height: 1px;
+            z-index: 5;
+        }
+
+        .output-preview {
+            background-color: #0a0a0a;
+            border: 1px solid #4A90E2;
+            padding: 8px;
+            margin-top: 8px;
+            text-align: center;
+            font-size: 10px;
+        }
+
+        .broadcast-quality {
+            color: #4A90E2;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .collapse-all {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #333333;
+            color: #ffffff;
+            border: 1px solid #4A90E2;
+            padding: 8px 12px;
+            font-size: 10px;
+            cursor: pointer;
+            z-index: 100;
+        }
+
+        .collapse-all:hover {
+            background-color: #4A90E2;
+        }
+
+        @media (max-width: 1200px) {
+            .workflow {
+                flex-direction: column;
+            }
+
+            .data-flow {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>MyrezeDataPackage Workflow</h1>
+            <p>Live Weather Broadcasting in Virtual Studios • From Data to Broadcast-Ready Assets</p>
+        </div>
+
+        <button class="collapse-all" onclick="toggleAllStages()">COLLAPSE ALL</button>
+
+        <div class="workflow">
+            <!-- Stage 1: Data Sources & Collection -->
+            <div class="stage" id="stage1">
+                <div class="stage-header" onclick="toggleStage('stage1')">
+                    <span class="status-indicator"></span>
+                    DATA SOURCES & COLLECTION
+                    <span class="expand-icon">▼</span>
+                </div>
+                <div class="stage-content">
+                    <div class="component" onclick="toggleComponent(this)">
+                        <div class="component-header">
+                            Satellite Data Feeds
+                            <span class="expand-icon">+</span>
+                        </div>
+                        <div class="component-description">
+                            Real-time weather satellite imagery and atmospheric measurements
+                        </div>
+                        <div class="component-details">
+                            <div class="code-block">Sources: GOES-16/17, NOAA-20, MetOp
+                                Resolution: 0.5-4km spatial, 15min temporal
+                                Formats: NetCDF, HDF5, GeoTIFF</div>
+                            <ul class="feature-list">
+                                <li>Infrared temperature data</li>
+                                <li>Visible light imagery</li>
+                                <li>Water vapor channels</li>
+                                <li>Lightning detection</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="component" onclick="toggleComponent(this)">
+                        <div class="component-header">
+                            Ground Station Networks
+                            <span class="expand-icon">+</span>
+                        </div>
+                        <div class="component-description">
+                            Automated weather stations and sensor networks
+                        </div>
+                        <div class="component-details">
+                            <div class="code-block">Networks: ASOS, METAR, CoCoRaHS
+                                Measurements: Temperature, pressure, wind, precipitation
+                                Update frequency: 1-15 minutes</div>
+                            <ul class="feature-list">
+                                <li>Temperature & humidity sensors</li>
+                                <li>Wind speed & direction</li>
+                                <li>Atmospheric pressure</li>
+                                <li>Precipitation gauges</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="component" onclick="toggleComponent(this)">
+                        <div class="component-header">
+                            Radar Systems
+                            <span class="expand-icon">+</span>
+                        </div>
+                        <div class="component-description">
+                            Doppler weather radar precipitation and wind data
+                        </div>
+                        <div class="component-details">
+                            <div class="code-block">Systems: NEXRAD, TDWR
+                                Products: Base reflectivity, velocity, spectrum width
+                                Range: 460km, 0.5-19.5° elevation angles</div>
+                            <ul class="feature-list">
+                                <li>Precipitation intensity</li>
+                                <li>Storm motion vectors</li>
+                                <li>Tornado detection</li>
+                                <li>Wind shear analysis</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="component" onclick="toggleComponent(this)">
+                        <div class="component-header">
+                            LLM Data Collectors
+                            <span class="expand-icon">+</span>
+                        </div>
+                        <div class="component-description">
+                            AI agents for automated data gathering and initial processing
+                        </div>
+                        <div class="component-details">
+                            <div class="code-block">Agents: data_collection_service_v2.1
+                                Capabilities: Multi-source aggregation, quality checks
+                                Output: Validated, standardized data packages</div>
+                            <ul class="feature-list">
+                                <li>Automated source monitoring</li>
+                                <li>Data quality validation</li>
+                                <li>Format standardization</li>
+                                <li>Anomaly detection</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="data-flow"></div>
+            </div>
+
+            <!-- Stage 2: MyrezeDataPackage Core -->
+            <div class="stage" id="stage2">
+                <div class="stage-header" onclick="toggleStage('stage2')">
+                    <span class="status-indicator"></span>
+                    MYREZEDATAPACKAGE CORE
+                    <span class="expand-icon">▼</span>
+                </div>
+                <div class="stage-content">
+                    <div class="component package-core" onclick="toggleComponent(this)">
+                        <div class="component-header">
+                            Data Structure & Validation
+                            <span class="expand-icon">+</span>
+                        </div>
+                        <div class="component-description">
+                            Standardized geospatial data container with type validation
+                        </div>
+                        <div class="component-details">
+                            <div class="code-block">package = MyrezeDataPackage(
+                                id="nyc-storm-2024-01-15",
+                                data={"grid": temp_data, "bounds": [-74.0, 40.7, -73.9, 40.8]},
+                                visualization_type="heatmap",
+                                time=Time.timestamp("2024-01-15T14:30:00Z")
+                                )</div>
+                            <ul class="feature-list">
+                                <li>Grid data validation</li>
+                                <li>Coordinate system checks</li>
+                                <li>Temporal consistency</li>
+                                <li>Schema compliance</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="component" onclick="toggleComponent(this)">
+                        <div class="component-header">
+                            Semantic Context Engine
+                            <span class="expand-icon">+</span>
+                        </div>
+                        <div class="component-description">
+                            Natural language descriptions and metadata for LLM consumption
+                        </div>
+                        <div class="component-details">
+                            <div class="code-block">semantic_context = SemanticContext(
+                                natural_description="Storm system approaching NYC with 65mph winds",
+                                semantic_tags=["severe_weather", "wind", "urban"],
+                                geographic_context={"city": "New York", "risk_level": "high"}
+                                )</div>
+                            <ul class="feature-list">
+                                <li>Auto-generated descriptions</li>
+                                <li>Geographic context extraction</li>
+                                <li>Semantic tagging</li>
+                                <li>Search optimization</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="component" onclick="toggleComponent(this)">
+                        <div class="component-header">
+                            Visual Summary Generator
+                            <span class="expand-icon">+</span>
+                        </div>
+                        <div class="component-description">
+                            Thumbnail generation and visual metadata for multimodal AI
+                        </div>
+                        <div class="component-details">
+                            <div class="code-block">visual_summary = VisualSummary(
+                                thumbnail_png=thumbnail_bytes,
+                                color_palette=["#440154", "#fde725"],
+                                visual_stats={"contrast": "high", "pattern": "spiral"}
+                                )</div>
+                            <ul class="feature-list">
+                                <li>PNG thumbnail generation</li>
+                                <li>Color palette extraction</li>
+                                <li>Visual pattern analysis</li>
+                                <li>Similarity hashing</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="component" onclick="toggleComponent(this)">
+                        <div class="component-header">
+                            Multi-Resolution Data
+                            <span class="expand-icon">+</span>
+                        </div>
+                        <div class="component-description">
+                            Multiple detail levels for different processing needs
+                        </div>
+                        <div class="component-details">
+                            <div class="code-block">multi_res = MultiResolutionData(
+                                overview={"type": "storm", "intensity": "severe"},
+                                reduced_resolution={"grid": downsampled_data},
+                                full_resolution={"grid": full_data}
+                                )</div>
+                            <ul class="feature-list">
+                                <li>Overview summaries</li>
+                                <li>Downsampled versions</li>
+                                <li>Statistical summaries</li>
+                                <li>Processed variants</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="data-flow"></div>
+            </div>
+
+            <!-- Stage 3: Multi-Agent Analysis -->
+            <div class="stage" id="stage3">
+                <div class="stage-header" onclick="toggleStage('stage3')">
+                    <span class="status-indicator"></span>
+                    MULTI-AGENT ANALYSIS & CONTEXT
+                    <span class="expand-icon">▼</span>
+                </div>
+                <div class="stage-content">
+                    <div class="component" onclick="toggleComponent(this)">
+                        <div class="component-header">
+                            Weather Expert Agents
+                            <span class="expand-icon">+</span>
+                        </div>
+                        <div class="component-description">
+                            Specialized meteorological analysis and forecasting
+                        </div>
+                        <div class="component-details">
+                            <div class="code-block">package.add_agent_context(
+                                "Category 3 hurricane with 120mph sustained winds approaching",
+                                agent_id="weather_forecasting_expert_v3.1",
+                                context_type="expert_opinion",
+                                confidence=0.94
+                                )</div>
+                            <ul class="feature-list">
+                                <li>Storm classification</li>
+                                <li>Intensity forecasting</li>
+                                <li>Track prediction</li>
+                                <li>Impact assessment</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="component" onclick="toggleComponent(this)">
+                        <div class="component-header">
+                            Emergency Management AI
+                            <span class="expand-icon">+</span>
+                        </div>
+                        <div class="component-description">
+                            Public safety analysis and emergency response planning
+                        </div>
+                        <div class="component-details">
+                            <div class="code-block">package.add_agent_context(
+                                "EMERGENCY: Evacuation zones A-C should be cleared within 6 hours",
+                                agent_id="emergency_management_system",
+                                context_type="expert_opinion",
+                                confidence=1.0
+                                )</div>
+                            <ul class="feature-list">
+                                <li>Risk assessment</li>
+                                <li>Evacuation planning</li>
+                                <li>Resource allocation</li>
+                                <li>Public warnings</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="component" onclick="toggleComponent(this)">
+                        <div class="component-header">
+                            Statistical Analysis Engine
+                            <span class="expand-icon">+</span>
+                        </div>
+                        <div class="component-description">
+                            Quantitative analysis and pattern recognition
+                        </div>
+                        <div class="component-details">
+                            <div class="code-block">package.add_agent_context(
+                                "Wind speeds 4.2σ above historical mean, 1-in-100 year event",
+                                agent_id="statistical_analysis_engine",
+                                context_type="analysis"
+                                )</div>
+                            <ul class="feature-list">
+                                <li>Statistical significance</li>
+                                <li>Historical comparisons</li>
+                                <li>Trend analysis</li>
+                                <li>Confidence intervals</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="component" onclick="toggleComponent(this)">
+                        <div class="component-header">
+                            Human Expert Validation
+                            <span class="expand-icon">+</span>
+                        </div>
+                        <div class="component-description">
+                            Expert meteorologist review and validation
+                        </div>
+                        <div class="component-details">
+                            <div class="code-block">package.add_agent_context(
+                                "Confirmed: Eyewall replacement cycle in progress, intensity fluctuations expected",
+                                agent_id="chief_meteorologist_smith",
+                                agent_type="human_expert"
+                                )</div>
+                            <ul class="feature-list">
+                                <li>Expert validation</li>
+                                <li>Field experience</li>
+                                <li>Quality assurance</li>
+                                <li>Broadcast approval</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="data-flow"></div>
+            </div>
+
+            <!-- Stage 4: Visualization Engines -->
+            <div class="stage" id="stage4">
+                <div class="stage-header" onclick="toggleStage('stage4')">
+                    <span class="status-indicator"></span>
+                    VISUALIZATION ENGINES
+                    <span class="expand-icon">▼</span>
+                </div>
+                <div class="stage-content">
+                    <div class="component" onclick="toggleComponent(this)">
+                        <div class="component-header">
+                            Unreal Engine Integration
+                            <span class="expand-icon">+</span>
+                        </div>
+                        <div class="component-description">
+                            High-quality 3D rendering for virtual studio broadcasting
+                        </div>
+                        <div class="component-details">
+                            <div class="code-block">unreal_output = package.to_unreal({
+                                "quality": "broadcast",
+                                "real_time": True,
+                                "particle_systems": True,
+                                "lighting": "dynamic"
+                                })</div>
+                            <ul class="feature-list">
+                                <li>Real-time 3D rendering</li>
+                                <li>Particle weather effects</li>
+                                <li>Dynamic lighting</li>
+                                <li>Camera tracking</li>
+                                <li>Green screen integration</li>
+                            </ul>
+                            <div class="output-preview">
+                                <div class="broadcast-quality">BROADCAST QUALITY</div>
+                                4K/8K • 60fps • HDR • Real-time
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="component" onclick="toggleComponent(this)">
+                        <div class="component-header">
+                            Three.js Web Rendering
+                            <span class="expand-icon">+</span>
+                        </div>
+                        <div class="component-description">
+                            Interactive web-based visualization for analysis and preview
+                        </div>
+                        <div class="component-details">
+                            <div class="code-block">threejs_output = package.to_threejs({
+                                "interactive": True,
+                                "animation": "smooth",
+                                "controls": "orbit"
+                                })</div>
+                            <ul class="feature-list">
+                                <li>Interactive 3D scenes</li>
+                                <li>WebGL acceleration</li>
+                                <li>Real-time updates</li>
+                                <li>Mobile compatibility</li>
+                                <li>Analysis tools</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="component" onclick="toggleComponent(this)">
+                        <div class="component-header">
+                            PNG/Static Export
+                            <span class="expand-icon">+</span>
+                        </div>
+                        <div class="component-description">
+                            High-resolution static images for print and digital media
+                        </div>
+                        <div class="component-details">
+                            <div class="code-block">png_export = package.to_png({
+                                "resolution": "4K",
+                                "colormap": "viridis",
+                                "annotations": True
+                                })</div>
+                            <ul class="feature-list">
+                                <li>High-resolution export</li>
+                                <li>Custom colormaps</li>
+                                <li>Annotation overlays</li>
+                                <li>Print-ready quality</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="component" onclick="toggleComponent(this)">
+                        <div class="component-header">
+                            Real-time Processing
+                            <span class="expand-icon">+</span>
+                        </div>
+                        <div class="component-description">
+                            Live data streaming and visualization updates
+                        </div>
+                        <div class="component-details">
+                            <div class="code-block">live_stream = LiveProcessor()
+                                live_stream.connect(package)
+                                live_stream.update_frequency = "30s"</div>
+                            <ul class="feature-list">
+                                <li>Live data ingestion</li>
+                                <li>Smooth transitions</li>
+                                <li>Performance optimization</li>
+                                <li>Buffering strategies</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="data-flow"></div>
+            </div>
+
+            <!-- Stage 5: Broadcasting Output -->
+            <div class="stage" id="stage5">
+                <div class="stage-header" onclick="toggleStage('stage5')">
+                    <span class="status-indicator"></span>
+                    BROADCASTING OUTPUT
+                    <span class="expand-icon">▼</span>
+                </div>
+                <div class="stage-content">
+                    <div class="component" onclick="toggleComponent(this)">
+                        <div class="component-header">
+                            Virtual Studio Integration
+                            <span class="expand-icon">+</span>
+                        </div>
+                        <div class="component-description">
+                            Seamless integration with virtual studio environments
+                        </div>
+                        <div class="component-details">
+                            <div class="code-block">Virtual Studio Features:
+                                • Real-time weather data overlay
+                                • Interactive 3D environments
+                                • Green screen compositing
+                                • Camera tracking integration</div>
+                            <ul class="feature-list">
+                                <li>Chroma key compatibility</li>
+                                <li>Multi-camera support</li>
+                                <li>Real-time compositing</li>
+                                <li>AR integration</li>
+                            </ul>
+                            <div class="output-preview">
+                                <div class="broadcast-quality">LIVE BROADCASTING</div>
+                                Virtual Studio Ready • Real-time Updates
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="component" onclick="toggleComponent(this)">
+                        <div class="component-header">
+                            Interactive Graphics
+                            <span class="expand-icon">+</span>
+                        </div>
+                        <div class="component-description">
+                            On-air graphics with real-time data integration
+                        </div>
+                        <div class="component-details">
+                            <div class="code-block">Interactive Elements:
+                                • Touch-screen compatibility
+                                • Gesture recognition
+                                • Voice command integration
+                                • Real-time data queries</div>
+                            <ul class="feature-list">
+                                <li>Touch screen controls</li>
+                                <li>Zoom and pan</li>
+                                <li>Data point selection</li>
+                                <li>Time scrubbing</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="component" onclick="toggleComponent(this)">
+                        <div class="component-header">
+                            Multi-Platform Distribution
+                            <span class="expand-icon">+</span>
+                        </div>
+                        <div class="component-description">
+                            Optimized output for various broadcast and digital platforms
+                        </div>
+                        <div class="component-details">
+                            <div class="code-block">Output Formats:
+                                • Broadcast TV (4K/8K HDR)
+                                • Streaming platforms
+                                • Social media clips
+                                • Mobile applications</div>
+                            <ul class="feature-list">
+                                <li>Format optimization</li>
+                                <li>Quality adaptation</li>
+                                <li>Automated encoding</li>
+                                <li>CDN distribution</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="component" onclick="toggleComponent(this)">
+                        <div class="component-header">
+                            Analytics & Monitoring
+                            <span class="expand-icon">+</span>
+                        </div>
+                        <div class="component-description">
+                            Performance monitoring and audience engagement analytics
+                        </div>
+                        <div class="component-details">
+                            <div class="code-block">Monitoring Features:
+                                • Rendering performance
+                                • Data latency tracking
+                                • Viewer engagement metrics
+                                • Error handling & recovery</div>
+                            <ul class="feature-list">
+                                <li>Real-time metrics</li>
+                                <li>Performance alerts</li>
+                                <li>Quality monitoring</li>
+                                <li>Usage analytics</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background-color: #111111; border: 1px solid #333333;">
+            <h3 style="color: #4A90E2; font-size: 14px; margin-bottom: 10px;">Key Benefits for Live Weather Broadcasting
+            </h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+                <div>
+                    <h4 style="color: #ffffff; font-size: 11px; margin-bottom: 5px;">Real-time Data Integration</h4>
+                    <p style="color: #CCCCCC; font-size: 10px;">Seamless ingestion and processing of live weather data
+                        from multiple sources with sub-minute latency.</p>
+                </div>
+                <div>
+                    <h4 style="color: #ffffff; font-size: 11px; margin-bottom: 5px;">Broadcast-Quality Rendering</h4>
+                    <p style="color: #CCCCCC; font-size: 10px;">Professional-grade 3D visualizations optimized for 4K/8K
+                        broadcasting with HDR support.</p>
+                </div>
+                <div>
+                    <h4 style="color: #ffffff; font-size: 11px; margin-bottom: 5px;">AI-Enhanced Context</h4>
+                    <p style="color: #CCCCCC; font-size: 10px;">Expert-level analysis and context from specialized AI
+                        agents for informed broadcasting decisions.</p>
+                </div>
+                <div>
+                    <h4 style="color: #ffffff; font-size: 11px; margin-bottom: 5px;">Interactive Virtual Studios</h4>
+                    <p style="color: #CCCCCC; font-size: 10px;">Full integration with virtual studio environments for
+                        immersive weather presentation.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleStage(stageId) {
+            const stage = document.getElementById(stageId);
+            const expandIcon = stage.querySelector('.stage-header .expand-icon');
+
+            stage.classList.toggle('collapsed');
+            expandIcon.textContent = stage.classList.contains('collapsed') ? '▶' : '▼';
+        }
+
+        function toggleComponent(component) {
+            const expandIcon = component.querySelector('.expand-icon');
+
+            component.classList.toggle('expanded');
+            expandIcon.textContent = component.classList.contains('expanded') ? '−' : '+';
+        }
+
+        function toggleAllStages() {
+            const stages = document.querySelectorAll('.stage');
+            const allCollapsed = Array.from(stages).every(stage => stage.classList.contains('collapsed'));
+
+            stages.forEach(stage => {
+                const expandIcon = stage.querySelector('.stage-header .expand-icon');
+                if (allCollapsed) {
+                    stage.classList.remove('collapsed');
+                    expandIcon.textContent = '▼';
+                } else {
+                    stage.classList.add('collapsed');
+                    expandIcon.textContent = '▶';
+                }
+            });
+
+            // Also collapse all components
+            if (!allCollapsed) {
+                document.querySelectorAll('.component').forEach(component => {
+                    component.classList.remove('expanded');
+                    const expandIcon = component.querySelector('.expand-icon');
+                    if (expandIcon) expandIcon.textContent = '+';
+                });
+            }
+        }
+
+        // Initialize with some sections expanded for demo
+        document.addEventListener('DOMContentLoaded', function () {
+            // Keep stage 2 (core) expanded by default
+            const stage2 = document.getElementById('stage2');
+            stage2.classList.remove('collapsed');
+        });
+    </script>
+</body>
+
+</html>
