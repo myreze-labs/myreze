@@ -542,9 +542,14 @@ detailed_package = MyrezeDataPackage(
 
 ```python
 # Always validate before sending
-from myreze.data.validate import validate_visualization_data
+from myreze.data.validate import validate_visualization_data, validate_mdp, suggest_visualization_type
 
+# First, let Myreze suggest appropriate visualization types
 data = {"grid": temperature_grid, "bounds": bounds}
+suggestions = suggest_visualization_type(data)
+print(f"Suggested visualization types: {suggestions}")
+
+# Validate data structure for chosen visualization type
 errors = validate_visualization_data(data, "heatmap")
 
 if errors:
@@ -552,7 +557,22 @@ if errors:
     # Fix the errors before proceeding
 else:
     print("✅ Data structure is valid")
-    # Create the package
+
+# After creating the package, validate the complete package
+package = MyrezeDataPackage(
+    id="validated-package",
+    data=data,
+    time=Time.timestamp("2023-07-15T14:30:00Z"),
+    visualization_type="heatmap"
+)
+
+try:
+    # Convert to dict format for validation
+    package_dict = package.to_dict()
+    validate_mdp(package_dict)
+    print("✅ Package structure is valid")
+except ValueError as e:
+    print(f"Package validation failed: {e}")
 ```
 
 ### 4. Handle Time Zones Properly
@@ -659,7 +679,7 @@ def safe_package_creation(data, visualization_type):
     
     try:
         # Validate the data structure first
-        from myreze.data.validate import validate_visualization_data
+        from myreze.data.validate import validate_visualization_data, validate_mdp
         errors = validate_visualization_data(data, visualization_type)
         
         if errors:
@@ -672,6 +692,10 @@ def safe_package_creation(data, visualization_type):
             time=Time.timestamp("2023-07-15T14:30:00Z"),
             visualization_type=visualization_type
         )
+        
+        # Validate the complete package
+        package_dict = package.to_dict()
+        validate_mdp(package_dict)
         
         # Test serialization
         json_str = package.to_json()
