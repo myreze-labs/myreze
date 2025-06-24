@@ -426,14 +426,14 @@ curl -X POST http://localhost:8000/orders \
 Three.js is perfect for interactive web visualizations:
 
 ```python
-from myreze.viz import ThreeJSRenderer
+from myreze.viz import FlatOverlayRenderer
 
 # Create a package with Three.js visualization
 web_package = MyrezeDataPackage(
     id="web-temperature-viz",
     data=temperature_data,
     time=Time.timestamp("2023-07-15T14:30:00Z"),
-    threejs_visualization=ThreeJSRenderer(),
+    threejs_visualization=FlatOverlayRenderer(),
     visualization_type="heatmap",
     metadata={"target_platform": "web"}
 )
@@ -453,24 +453,21 @@ print("Generated Three.js visualization for web deployment")
 Unreal Engine provides broadcast-quality 3D visualizations:
 
 ```python
-from myreze.viz import UnrealRenderer
+from myreze.viz import CloudRenderer
 
 # Create terrain data for Unreal
 terrain_data = {
-    "elevation": np.random.rand(200, 200) * 1000,  # Elevation in meters
+    "grid": np.random.rand(200, 200) * 1000,  # Temperature/elevation data
     "bounds": [-74.1, 40.6, -73.9, 40.9],
-    "texture_layers": {
-        "base_color": np.random.rand(200, 200, 3),  # RGB base texture
-        "normal_map": np.random.rand(200, 200, 3)   # Surface normals
-    }
+    "units": "meters"
 }
 
 unreal_package = MyrezeDataPackage(
     id="unreal-terrain",
     data=terrain_data,
     time=Time.timestamp("2023-07-15T14:30:00Z"),
-    unreal_visualization=UnrealRenderer(),
-    visualization_type="terrain",
+    unreal_visualization=CloudRenderer(),
+    visualization_type="heatmap",
     metadata={"target_platform": "unreal_engine"}
 )
 
