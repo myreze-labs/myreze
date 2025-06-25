@@ -248,10 +248,8 @@ timeseries = Time.series([
 
 For consistency across all Myreze packages, follow these conventions:
 
-- **Coordinate System**: Use Web Mercator WGS84 auxiliary sphere (EPSG 3857) for geolocations (this is actually under review, might change. YEt, good to learn the various projections used in geolocated data.)
-- **Normalization**: Return geolocated data normalized to the (0,1) planar region
+- **Coordinate System and projection**: Use EPSG:4326 for geolocations. 
 - **Orientation**: Let the Y component point up in returned geometries
-- **Layer Placement**: Place any layers at y=0 offset
 
 ## AI Integration Features
 
